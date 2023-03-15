@@ -6,6 +6,7 @@
 #include <iterator>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <lexer/operations/optrie.hpp>
 #include <lexer/types/token.hpp>
@@ -28,6 +29,8 @@ class Lexer {
   Lexer(Lexer&) = delete;
   Lexer& operator=(const Lexer&) = delete;
   Lexer& operator=(Lexer&&) = delete;
+
+  void LoadOpTrie(const std::vector<TrieEntry>&);
 
   Token nextToken();
   void  reset();

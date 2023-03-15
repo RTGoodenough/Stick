@@ -3,6 +3,9 @@
 #include <lexer/operations/optrie.hpp>
 
 namespace Stick {
+
+OpTrie::OpTrie() : root(new TrieNode()) {}
+
 void
 OpTrie::add(const std::string& str, OpType type) {
   TrieNode* curr = root;

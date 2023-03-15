@@ -15,6 +15,8 @@ struct TrieNode {
 
 class OpTrie {
  public:
+  OpTrie();
+
   void   add(const std::string&, OpType);
   OpType traverse(const char*) const;
 

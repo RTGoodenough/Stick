@@ -1,8 +1,6 @@
 
 #include <lexer/lexer.hpp>
 
-// TODO load up the optrie
-
 Stick::Lexer::Lexer(const std::string& sourceFile) : srcStream{sourceFile, std::fstream::in} {
   if (!srcStream.is_open()) {
     Stick::LexerException::Throw("Unable To Open Source File");
@@ -13,14 +11,22 @@ Stick::Lexer::Lexer(const std::string& sourceFile) : srcStream{sourceFile, std::
 void
 Stick::Lexer::reset() {}
 
+void
+Stick::Lexer::LoadOpTrie(const std::vector<TrieEntry>& entries) {
+  for (const auto& entry : entries) {
+    optrie.add(entry.str, entry.type);
+  }
+}
+
 Token
 Stick::Lexer::nextToken() {
-  const char curr = srcStream.get();
+  char curr = srcStream.get();
   while (curr != EOF) {
     switch (curr) {
       case '#':
-        printf("Skipping Comment");
+        printf("Skipping Comment\n");
         skipComment();
+        curr = srcStream.get();
         continue;
     }
 
@@ -29,25 +35,25 @@ Stick::Lexer::nextToken() {
       OpType      op = parseOp(str);
 
       if (op == NOP) {
-        printf("%s", str);
+        printf("ID: %s\n", str);
         return {TokenType::ID, {.string = str}};
       } else {
-        printf("Operation: %s", str);
+        printf("Operation: %s\n", str);
         delete[] str;
         return {TokenType::OP, {.number = op}};
       }
     }
     if (isdigit(curr)) {
       long num = parseNumber(curr);
-      printf("Number: %l", num);
+      printf("Number: %li\n", num);
       return {TokenType::NUMBER, {.number = num}};
     }
 
-    printf("Char: %c", curr);
+    printf("Char: %c\n", curr);
     return {TokenType::CHAR, {.number = curr}};
   }
 
-  printf("End of File");
+  printf("End of File\n");
   return {TokenType::CHAR, {EOF}};
 }
 
@@ -80,4 +86,11 @@ Stick::Lexer::skipComment() {
   while (curr != '\n' && curr != EOF) {
     curr = srcStream.get();
   }
+}
+
+OpType
+Stick::Lexer::parseOp(const char* str) {
+  OpType op = optrie.traverse(str);
+
+  return op;
 }

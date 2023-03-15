@@ -1,0 +1,4 @@
+PUSH 45
+POPS 2
+# comment
+PRINT

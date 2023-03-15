@@ -11,8 +11,8 @@ union TokenValue {
 };
 
 struct Token {
-  TokenType  type;
-  TokenValue value;
+  TokenType  type = OP;
+  TokenValue value = {.number = 0};
 };
 
 #endif
