@@ -1,0 +1,6 @@
+#ifndef STICK_OPERATIONS_HPP
+#define STICK_OPERATIONS_HPP
+
+enum OpType { NOP, PUSH, POP, ADD, SUB, PRINT };
+
+#endif
