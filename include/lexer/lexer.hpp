@@ -24,7 +24,7 @@ class Lexer {
  public:
   Lexer() = default;
   ~Lexer() = default;
-  Lexer(const std::string& sourceFile);
+  Lexer(const std::string&);
   Lexer(Lexer&&) = delete;
   Lexer(Lexer&) = delete;
   Lexer& operator=(const Lexer&) = delete;
@@ -34,6 +34,8 @@ class Lexer {
 
   Token nextToken();
   void  reset();
+
+  std::string getRowCol() const;
 
   size_t getRow() const;
   size_t getCol() const;
@@ -50,6 +52,7 @@ class Lexer {
   const char* parseString(char);
   long        parseNumber(char);
 
+  char skipWhiteSpace(char);
   void skipComment();
 };
 }  // namespace Stick

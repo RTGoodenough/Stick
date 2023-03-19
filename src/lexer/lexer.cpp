@@ -1,11 +1,11 @@
 
 #include <lexer/lexer.hpp>
 
-Stick::Lexer::Lexer(const std::string& sourceFile) : srcStream{sourceFile, std::fstream::in} {
+Stick::Lexer::Lexer(const std::string& sourceFile) : srcStream{sourceFile, std::fstream::in}, currRow(0), currCol(0) {
   if (!srcStream.is_open()) {
     Stick::LexerException::Throw("Unable To Open Source File");
   }
-  srcStream >> std::skipws;
+  LoadOpTrie(operations);
 }
 
 void
@@ -21,10 +21,11 @@ Stick::Lexer::LoadOpTrie(const std::vector<TrieEntry>& entries) {
 Token
 Stick::Lexer::nextToken() {
   char curr = srcStream.get();
+  curr = skipWhiteSpace(curr);
   while (curr != EOF) {
     switch (curr) {
       case '#':
-        printf("Skipping Comment\n");
+        //printf("Skipping Comment\n");
         skipComment();
         curr = srcStream.get();
         continue;
@@ -35,25 +36,25 @@ Stick::Lexer::nextToken() {
       OpType      op = parseOp(str);
 
       if (op == NOP) {
-        printf("ID: %s\n", str);
+        //printf("ID: %s\n", str);
         return {TokenType::ID, {.string = str}};
       } else {
-        printf("Operation: %s\n", str);
+        //printf("Operation: %s\n", str);
         delete[] str;
         return {TokenType::OP, {.number = op}};
       }
     }
     if (isdigit(curr)) {
       long num = parseNumber(curr);
-      printf("Number: %li\n", num);
+      //printf("Number: %li\n", num);
       return {TokenType::NUMBER, {.number = num}};
     }
 
-    printf("Char: %c\n", curr);
+    //printf("Char: %c\n", curr);
     return {TokenType::CHAR, {.number = curr}};
   }
 
-  printf("End of File\n");
+  //printf("End of File\n");
   return {TokenType::CHAR, {EOF}};
 }
 
@@ -75,6 +76,7 @@ Stick::Lexer::parseNumber(char start) {
     builder.add(start);
     start = srcStream.get();
   }
+  srcStream.putback(start);
   long temp = std::stol(builder.get().data);
   builder.clean();
   return temp;
@@ -88,9 +90,23 @@ Stick::Lexer::skipComment() {
   }
 }
 
+char
+Stick::Lexer::skipWhiteSpace(char curr) {
+  while (isspace(curr)) {
+    curr = srcStream.get();
+  }
+
+  return curr;
+}
+
 OpType
 Stick::Lexer::parseOp(const char* str) {
   OpType op = optrie.traverse(str);
 
   return op;
+}
+
+std::string
+Stick::Lexer::getRowCol() const {
+  return "Line: " + std::to_string(currRow) + " Col: " + std::to_string(currCol);
 }

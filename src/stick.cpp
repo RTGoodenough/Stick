@@ -1,18 +1,13 @@
 
 
-#include <lexer/lexer.hpp>
+#include <interpreter/interpreter.hpp>
 
 int
 main(int argc, const char** argv) {
-  Stick::Lexer lexer("test.stk");
-  std::cout << "Loading OpTrie\n";
-  lexer.LoadOpTrie(operations);
-  std::cout << "Loaded OpTrie\n";
-
-  Token curr;
-
-  while (curr.type != CHAR && curr.value.number != EOF) {
-    curr = lexer.nextToken();
+  if (argc != 2) {
+    std::cerr << "Usage: Stick *filepath*\n";
+    exit(1);
   }
-  std::cout << "Finished\n";
+
+  Stick::Interpreter(argv[1]).RunProgram();
 }
