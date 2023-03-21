@@ -31,23 +31,27 @@ Stick::Interpreter::RunOp() {
     case PRINT:
       Print();
       break;
+    case FUNC:
+      funcDef();
+      break;
+    case IF:
+      ifOp();
+      break;
     default:
+      RuntimeError("OP Type Not Accounted For: " + std::to_string(currOp.type));
       break;
   }
 }
 
 void
 Stick::Interpreter::Push() {
-  if (!currOp.referenceValue) {
-    valStack.push(currOp.value.number);
-    return;
-  }
-
-  // TODO get value from id
+  printf("Push\n");
+  valStack.push(getOpValue());
 }
 
 void
 Stick::Interpreter::Pop() {
+  printf("Pop\n");
   if (valStack.empty())
     RuntimeError("Attempt Pop on Empty Stack");
 
@@ -56,6 +60,7 @@ Stick::Interpreter::Pop() {
 
 void
 Stick::Interpreter::Add() {
+  printf("Add\n");
   if (valStack.size() < 2)
     RuntimeError("Call To Add With Less Than 2 Values");
 
@@ -69,6 +74,7 @@ Stick::Interpreter::Add() {
 
 void
 Stick::Interpreter::Sub() {
+  printf("Sub\n");
   if (valStack.size() < 2)
     RuntimeError("Call To Sub With Less Than 2 Values");
 
@@ -82,9 +88,36 @@ Stick::Interpreter::Sub() {
 
 void
 Stick::Interpreter::Print() {
+  printf("Print\n");
   if (valStack.size() == 0) {
     std::cout << "Stack Empty\n";
   } else {
     std::cout << std::to_string(valStack.top()) << '\n';
   }
+}
+
+void
+Stick::Interpreter::funcDef() {
+  printf("Function Def\n");
+  // TODO
+}
+
+void
+Stick::Interpreter::ifOp() {
+  printf("If %li %li\n", valStack.top(), getOpValue());
+  if (valStack.top() != getOpValue()) {
+    currOp = parser.SkipIf();
+  }
+
+  // TODO fix not skipping else if the if is true
+}
+
+int64_t
+Stick::Interpreter::getOpValue() {
+  if (currOp.referenceValue) {
+    // TODO
+    RuntimeError::Throw("Reference Values Not Implemented");
+  }
+
+  return currOp.value.number;
 }

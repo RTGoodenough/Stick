@@ -33,6 +33,10 @@ class Interpreter {
   void Add();
   void Sub();
   void Print();
+  void ifOp();
+  void funcDef();
+
+  int64_t getOpValue();
 };
 }  // namespace Stick
 

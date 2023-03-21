@@ -1,7 +1,7 @@
 
 #include <lexer/lexer.hpp>
 
-Stick::Lexer::Lexer(const std::string& sourceFile) : srcStream{sourceFile, std::fstream::in}, currRow(0), currCol(0) {
+Stick::Lexer::Lexer(const std::string& sourceFile) : srcStream{sourceFile, std::fstream::in}, currLine(1), currCol(0) {
   if (!srcStream.is_open()) {
     Stick::LexerException::Throw("Unable To Open Source File");
   }
@@ -20,41 +20,42 @@ Stick::Lexer::LoadOpTrie(const std::vector<TrieEntry>& entries) {
 
 Token
 Stick::Lexer::nextToken() {
-  char curr = srcStream.get();
+  char curr = next();
   curr = skipWhiteSpace(curr);
   while (curr != EOF) {
     switch (curr) {
       case '#':
-        //printf("Skipping Comment\n");
+        // printf("Skipping Comment\n");
         skipComment();
-        curr = srcStream.get();
+        curr = next();
         continue;
     }
+    curr = skipWhiteSpace(curr);
 
     if (isalpha(curr) || curr == '_') {
       const char* str = parseString(curr);
       OpType      op = parseOp(str);
 
       if (op == NOP) {
-        //printf("ID: %s\n", str);
+        // printf("ID: %s\n", str);
         return {TokenType::ID, {.string = str}};
       } else {
-        //printf("Operation: %s\n", str);
+        // printf("Operation: %s\n", str);
         delete[] str;
         return {TokenType::OP, {.number = op}};
       }
     }
     if (isdigit(curr)) {
       long num = parseNumber(curr);
-      //printf("Number: %li\n", num);
+      // printf("Number: %li\n", num);
       return {TokenType::NUMBER, {.number = num}};
     }
 
-    //printf("Char: %c\n", curr);
+    // printf("Char: %c\n", curr);
     return {TokenType::CHAR, {.number = curr}};
   }
 
-  //printf("End of File\n");
+  // printf("End of File\n");
   return {TokenType::CHAR, {EOF}};
 }
 
@@ -63,7 +64,7 @@ Stick::Lexer::parseString(char start) {
   DataBuilder<char> builder;
   while (isalnum(start)) {
     builder.add(start);
-    start = srcStream.get();
+    start = next();
   }
   builder.add('\0');
   return builder.get().data;
@@ -74,9 +75,9 @@ Stick::Lexer::parseNumber(char start) {
   DataBuilder<char> builder;
   while (isalnum(start)) {
     builder.add(start);
-    start = srcStream.get();
+    start = next();
   }
-  srcStream.putback(start);
+  putback(start);
   long temp = std::stol(builder.get().data);
   builder.clean();
   return temp;
@@ -84,16 +85,16 @@ Stick::Lexer::parseNumber(char start) {
 
 void
 Stick::Lexer::skipComment() {
-  char curr = srcStream.get();
+  char curr = next();
   while (curr != '\n' && curr != EOF) {
-    curr = srcStream.get();
+    curr = next();
   }
 }
 
 char
 Stick::Lexer::skipWhiteSpace(char curr) {
   while (isspace(curr)) {
-    curr = srcStream.get();
+    curr = next();
   }
 
   return curr;
@@ -107,6 +108,27 @@ Stick::Lexer::parseOp(const char* str) {
 }
 
 std::string
-Stick::Lexer::getRowCol() const {
-  return "Line: " + std::to_string(currRow) + " Col: " + std::to_string(currCol);
+Stick::Lexer::getLineCol() const {
+  return "Line: " + std::to_string(currLine) + " Col: " + std::to_string(currCol);
+}
+
+inline char
+Stick::Lexer::next() {
+  char c = srcStream.get();
+  if (c == '\n') {
+    ++currLine;
+    currCol = 0;
+  }
+
+  return c;
+}
+
+void
+Stick::Lexer::putback(char c) {
+  srcStream.putback(c);
+  if (c == '\n' && currLine > 0) {
+    --currLine;
+  } else {
+    --currCol;
+  }
 }

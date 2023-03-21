@@ -1,4 +1,20 @@
-PUSH 45
-PUSH 24
-SUB
+
+#FUNC Test
+#TAKE 2
+#  PUSH 45
+#  PUSH 24
+#  ADD
+#  CLOSE
+
+
+PUSH 25
+
+
+IF 25
+  PUSH 12
+ELSE
+  PUSH 5
+CLOSE
+
+ADD
 PRINT

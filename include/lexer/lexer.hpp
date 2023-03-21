@@ -35,15 +35,15 @@ class Lexer {
   Token nextToken();
   void  reset();
 
-  std::string getRowCol() const;
+  std::string getLineCol() const;
 
-  size_t getRow() const;
+  size_t getLine() const;
   size_t getCol() const;
 
  private:
   std::ifstream srcStream;
 
-  size_t currRow;
+  size_t currLine;
   size_t currCol;
 
   OpTrie optrie;
@@ -54,6 +54,9 @@ class Lexer {
 
   char skipWhiteSpace(char);
   void skipComment();
+
+  [[nodiscard]] inline char next();
+  void                      putback(char);
 };
 }  // namespace Stick
 

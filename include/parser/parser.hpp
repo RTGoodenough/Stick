@@ -18,13 +18,21 @@ class Parser {
 
   OpCall nextOperation();
 
+  OpCall SkipIf();
+
  private:
   Lexer lexer;
-
   Token currToken;
 
   void getOp(OpCall&);
   void getValue(OpCall&);
+
+  void funcDef(OpCall&);
+  void push(OpCall&);
+  void ifOp(OpCall&);
+
+  inline bool isElse();
+  inline bool isClose();
 };
 }  // namespace Stick
 
