@@ -23,11 +23,6 @@ Stick::Parser::nextOperation() {
     return {END, {}, false};
 
   getOp(ret);
-  if (isElse() || isClose()) {
-    printf("Else, next Op\n");
-    return nextOperation();
-  }
-
   getValue(ret);
 
   return ret;
@@ -84,35 +79,17 @@ Stick::Parser::ifOp(OpCall& op) {
   op.referenceValue = (currToken.type == ID);
 }
 
-/*
-need to fix, will stop at the first else
-if
-if
-else <- will stop here
-else <- should stop here
-close
-close
-
-*/
-
 OpCall
 Stick::Parser::SkipIf() {
   currToken = lexer.nextToken();
-  size_t ifCnt = 1;
-  while (ifCnt > 0) {
-    if (currToken.type == OP && currToken.value.number == IF) {
-      ++ifCnt;
-    } else if (isElse() || isClose()) {
-      --ifCnt;
-    }
+  while (!isClose()) {
+    if (isEnd(currToken))
+      SyntaxError::Throw("Expected CLOSE Found End of File");
+
     currToken = lexer.nextToken();
   }
-  return nextOperation();
-}
 
-inline bool
-Stick::Parser::isElse() {
-  return (currToken.type == OP && currToken.value.number == ELSE);
+  return nextOperation();
 }
 
 inline bool

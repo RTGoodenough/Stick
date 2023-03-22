@@ -31,8 +31,9 @@ class Parser {
   void push(OpCall&);
   void ifOp(OpCall&);
 
-  inline bool isElse();
   inline bool isClose();
+
+  inline OpCall SkipIfHelper(size_t);
 };
 }  // namespace Stick
 
