@@ -42,11 +42,12 @@ Stick::Parser::getValue(OpCall& op) {
     case (PUSH):
       push(op);
       break;
-    case (FUNC):
-      funcDef(op);
-      break;
-    case (IF):
-      ifOp(op);
+    case IF_EQ:
+    case IF_LT:
+    case IF_GT:
+    case IF_GTE:
+    case IF_LTE:
+      push(op);
       break;
     default:
       break;
@@ -61,38 +62,8 @@ Stick::Parser::push(OpCall& op) {
 }
 
 void
-Stick::Parser::funcDef(OpCall& op) {
-  currToken = lexer.nextToken();
-
-  if (currToken.type != ID) {
-    SyntaxError::Throw("Expected Function Name " + lexer.getLineCol());
-  }
-
-  op.value = currToken.value;
-  op.referenceValue = true;
-}
-
-void
 Stick::Parser::ifOp(OpCall& op) {
   currToken = lexer.nextToken();
   op.value = currToken.value;
   op.referenceValue = (currToken.type == ID);
-}
-
-OpCall
-Stick::Parser::SkipIf() {
-  currToken = lexer.nextToken();
-  while (!isClose()) {
-    if (isEnd(currToken))
-      SyntaxError::Throw("Expected CLOSE Found End of File");
-
-    currToken = lexer.nextToken();
-  }
-
-  return nextOperation();
-}
-
-inline bool
-Stick::Parser::isClose() {
-  return (currToken.type == OP && currToken.value.number == CLOSE);
 }

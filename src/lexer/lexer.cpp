@@ -62,7 +62,7 @@ Stick::Lexer::nextToken() {
 const char*
 Stick::Lexer::parseString(char start) {
   DataBuilder<char> builder;
-  while (isalnum(start)) {
+  while (isalnum(start) || start == '_') {
     builder.add(start);
     start = next();
   }

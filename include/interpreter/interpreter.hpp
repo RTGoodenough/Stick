@@ -7,6 +7,12 @@
 
 namespace Stick {
 
+enum IfVal {
+  TRUE,
+  FALSE,
+  SKIP,
+};
+
 class RuntimeError : public std::runtime_error {
  public:
   RuntimeError(const std::string& message) : std::runtime_error(message) {}
@@ -25,6 +31,7 @@ class Interpreter {
   OpCall currOp;
 
   std::stack<int64_t> valStack;
+  std::stack<IfVal>   ifStack;
 
   void RunOp();
 
@@ -33,8 +40,11 @@ class Interpreter {
   void Add();
   void Sub();
   void Print();
-  void ifOp();
-  void funcDef();
+  void If();
+  void Else();
+  void Close();
+
+  void handleIfs();
 
   int64_t getOpValue();
 };

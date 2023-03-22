@@ -1,17 +1,11 @@
 
-#FUNC Test
-#TAKE 2
-#  PUSH 45
-#  PUSH 24
-#  ADD
-#  CLOSE
-
-
 PUSH 40
+PUSH 5
 
-IF 40
-  PUSH 29
-  ADD
-CLOSE
+MULT
+
+START
+
+LOOP
 
 PRINT

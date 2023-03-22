@@ -3,7 +3,7 @@
 
 #include <vector>
 
-enum OpType { NOP, PUSH, POP, ADD, SUB, PRINT, FUNC, CLOSE, CALL, IF, END };
+enum OpType { NOP, PUSH, POP, ADD, SUB, PRINT, CLOSE, IF_EQ, IF_LT, IF_GT, IF_GTE, IF_LTE, ELSE, END };
 
 struct TrieEntry {
   OpType      type;
@@ -15,10 +15,13 @@ inline std::vector<TrieEntry> operations{{PUSH, "PUSH"},
                                          {ADD, "ADD"},
                                          {SUB, "SUB"},
                                          {PRINT, "PRINT"},
-                                         {FUNC, "FUNC"},
-                                         {CALL, "CALL"},
                                          {CLOSE, "CLOSE"},
-                                         {IF, "IF"},
+                                         {IF_EQ, "IF_EQ"},
+                                         {IF_LT, "IF_LT"},
+                                         {IF_GT, "IF_GT"},
+                                         {IF_GTE, "IF_GTE"},
+                                         {IF_LTE, "IF_LTE"},
+                                         {ELSE, "ELSE"},
                                          {END, ""}};
 
 #endif
