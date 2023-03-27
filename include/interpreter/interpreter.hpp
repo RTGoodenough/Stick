@@ -1,17 +1,10 @@
 #ifndef STICK_INTERPRETER_HPP
 #define STICK_INTERPRETER_HPP
 
-#include <stack>
-
+#include <interpreter/context.hpp>
 #include <parser/parser.hpp>
 
 namespace Stick {
-
-enum IfVal {
-  TRUE,
-  FALSE,
-  SKIP,
-};
 
 class RuntimeError : public std::runtime_error {
  public:
@@ -28,25 +21,29 @@ class Interpreter {
 
  private:
   Parser parser;
-  OpCall currOp;
 
-  std::stack<int64_t> valStack;
-  std::stack<IfVal>   ifStack;
+  OpCall              currOp;
+  std::stack<Context> callStack;
 
   void RunOp();
+  void outputStack();
 
-  void Push();
   void Pop();
+  void Push();
+  void Print();
   void Add();
   void Sub();
-  void Print();
-  void If();
-  void Else();
-  void Close();
+  void StackLen();
 
   void handleIfs();
+  void IfOp();
+  void ElseOp();
+  void CloseOp();
+  bool evalIf();
 
-  int64_t getOpValue();
+  void handleLoops();
+  void whileOp();
+  void loopOp();
 };
 }  // namespace Stick
 

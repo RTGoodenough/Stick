@@ -4,6 +4,8 @@
 #include <lexer/lexer.hpp>
 #include <parser/types/opcall.hpp>
 
+// TODO add lookahead and add expressions instead of just operation value
+
 namespace Stick {
 
 class SyntaxError : public std::runtime_error {
@@ -16,17 +18,19 @@ class Parser {
  public:
   Parser(const std::string&);
 
+  void   seek(size_t);
   OpCall nextOperation();
 
  private:
   Lexer lexer;
-  Token currToken;
+  Token lookahead;
 
-  void getOp(OpCall&);
-  void getValue(OpCall&);
+  void match(TokenType);
+  void moveLookahead();
 
-  void push(OpCall&);
-  void ifOp(OpCall&);
+  OpValue evaluateExpression();
+  OpValue evaluateReference();
+  int64_t evaluateMath();
 };
 }  // namespace Stick
 

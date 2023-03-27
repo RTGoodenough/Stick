@@ -33,16 +33,18 @@ class Lexer {
   void LoadOpTrie(const std::vector<TrieEntry>&);
 
   Token nextToken();
-  void  reset();
+  void  seek(size_t);
 
   std::string getLineCol() const;
 
+  size_t getPos();
   size_t getLine() const;
   size_t getCol() const;
 
  private:
   std::ifstream srcStream;
 
+  size_t currPos;
   size_t currLine;
   size_t currCol;
 
@@ -54,9 +56,12 @@ class Lexer {
 
   char skipWhiteSpace(char);
   void skipComment();
+  void putback(char);
+
+  BoolOp parseBoolOp(char);
+  BoolOp boolean(BoolOp);
 
   [[nodiscard]] inline char next();
-  void                      putback(char);
 };
 }  // namespace Stick
 

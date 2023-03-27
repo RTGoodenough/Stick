@@ -16,54 +16,79 @@ Stick::Parser::Parser(const std::string& filepath) : lexer(filepath) {}
 
 OpCall
 Stick::Parser::nextOperation() {
-  OpCall ret;
-  currToken = lexer.nextToken();
+  // std::cout << "Start OP:\n";
+  moveLookahead();
 
-  if (isEnd(currToken))
-    return {END, {}, false};
+  if (isEnd(lookahead))
+    return {END, {}, 0};
 
-  getOp(ret);
-  getValue(ret);
+  match(OP);
 
-  return ret;
-}
+  OpCall currOp;
+  currOp.position = lookahead.position;
+  currOp.type = static_cast<OpType>(lookahead.value.number);
 
-void
-Stick::Parser::getOp(OpCall& op) {
-  if (currToken.type != OP) {
-    SyntaxError::Throw("Expected Operation " + lexer.getLineCol() + " Found: " + currToken.toString());
-  }
-  op.type = static_cast<OpType>(currToken.value.number);
-}
-
-void
-Stick::Parser::getValue(OpCall& op) {
-  switch (op.type) {
-    case (PUSH):
-      push(op);
-      break;
-    case IF_EQ:
-    case IF_LT:
-    case IF_GT:
-    case IF_GTE:
-    case IF_LTE:
-      push(op);
-      break;
+  switch (currOp.type) {
+    case IF:
+    case WHILE:
+      // std::cout << "IF/WHILE\n";
+      moveLookahead();
+      currOp.expression.boolean = static_cast<BoolOp>(lookahead.value.number);
+    case PUSH:
+      // std::cout << "PUSH\n";
+      moveLookahead();
+      currOp.expression.value = evaluateExpression();
     default:
       break;
   }
+
+  return currOp;
 }
 
 void
-Stick::Parser::push(OpCall& op) {
-  currToken = lexer.nextToken();
-  op.value = currToken.value;
-  op.referenceValue = (currToken.type == ID);
+Stick::Parser::seek(size_t pos) {
+  lexer.seek(pos);
 }
 
 void
-Stick::Parser::ifOp(OpCall& op) {
-  currToken = lexer.nextToken();
-  op.value = currToken.value;
-  op.referenceValue = (currToken.type == ID);
+Stick::Parser::match(TokenType type) {
+  if (lookahead.type != type) {
+    SyntaxError::Throw("Expected Type: " + TypeStrs.at(type) + ", Found Token: " + lookahead.toString() +
+                       "\nAt: " + lexer.getLineCol());
+  }
+}
+
+void
+Stick::Parser::moveLookahead() {
+  lookahead = lexer.nextToken();
+  // std::cout << "CurrToken: " << lookahead.toString() << "\n";
+}
+
+OpValue
+Stick::Parser::evaluateExpression() {
+  Expression ret;
+
+  switch (lookahead.type) {
+    case ID:
+      return evaluateReference();
+    case NUMBER:
+      return {.number = evaluateMath()};
+    default:
+      SyntaxError::Throw("Evaluate Expression: Expected Type: " + TypeStrs.at(NUMBER) +
+                         ", Found Token: " + lookahead.toString() + "\nAt: " + lexer.getLineCol());
+  }
+
+  return {.number = 0};
+}
+
+OpValue
+Stick::Parser::evaluateReference() {
+  // TODO check if should be value or string
+  return {.string = lookahead.value.string};
+}
+
+int64_t
+Stick::Parser::evaluateMath() {
+  // TODO allow for arithmetic
+  return lookahead.value.number;
 }

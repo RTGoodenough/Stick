@@ -2,22 +2,57 @@
 
 #include <interpreter/interpreter.hpp>
 
-Stick::Interpreter::Interpreter(const std::string& filepath) : parser(filepath) {}
+void
+printOp(OpCall& op) {
+  std::cout << "Operation: ";
+  switch (op.type) {
+    case NOP:
+      std::cout << "OP ";
+      break;
+    case PUSH:
+      std::cout << "PUSH " << std::to_string(op.expression.value.number);
+      break;
+    case POP:
+      std::cout << "POP ";
+      break;
+    case CLOSE:
+      std::cout << "CLOSE ";
+      break;
+    case ELSE:
+      std::cout << "ELSE ";
+      break;
+    case LOOP:
+      std::cout << "LOOP ";
+      break;
+    case END:
+      std::cout << "END ";
+      break;
+  }
+
+  std::cout << '\n';
+}
+
+Stick::Interpreter::Interpreter(const std::string& filepath) : parser(filepath) {
+  callStack.push(Context{});
+  callStack.top().run.push(TRUE);
+}
 
 void
 Stick::Interpreter::RunProgram() {
-  ifStack.push(TRUE);
   currOp = parser.nextOperation();
   while (currOp.type != END) {
-    handleIfs();
     RunOp();
     currOp = parser.nextOperation();
-  }
+  };
+
+  outputStack();
 }
 
 void
 Stick::Interpreter::RunOp() {
-  if (ifStack.top() == TRUE) {
+  handleLoops();
+  handleIfs();
+  if (callStack.top().run.top() == TRUE) {
     switch (currOp.type) {
       case PUSH:
         Push();
@@ -25,159 +60,199 @@ Stick::Interpreter::RunOp() {
       case POP:
         Pop();
         break;
-      case ADD:
-        Add();
+      case PRINT:
+        Print();
         break;
       case SUB:
         Sub();
         break;
-      case PRINT:
-        Print();
+      case ADD:
+        Add();
         break;
-      default:
-        RuntimeError::Throw("OP Type Not Accounted For: " + std::to_string(currOp.type));
+      case STKLEN:
+        StackLen();
         break;
     }
   }
 }
 
 void
-Stick::Interpreter::Push() {
-  int64_t val = getOpValue();
-  valStack.push(val);
+Stick::Interpreter::outputStack() {
+  auto& stack = callStack.top().values;
+  std::cout << "\nStack (" << std::to_string(stack.size()) << "): ";
+  while (!stack.empty()) {
+    std::cout << std::to_string(stack.top()) << ", ";
+    stack.pop();
+  }
+  std::cout << '\n';
 }
 
 void
 Stick::Interpreter::Pop() {
-  if (valStack.empty())
-    RuntimeError::Throw("Attempt Pop on Empty Stack");
+  if (callStack.top().values.size() < 1)
+    RuntimeError::Throw("Attempt To Pop Empty Stack");
 
-  valStack.pop();
+  callStack.top().values.pop();
 }
 
 void
-Stick::Interpreter::Add() {
-  if (valStack.size() < 2)
-    RuntimeError::Throw("Call To Add With Less Than 2 Values");
-
-  auto l = valStack.top();
-  valStack.pop();
-  auto r = valStack.top();
-  valStack.pop();
-
-  valStack.push(l + r);
+Stick::Interpreter::Push() {
+  callStack.top().values.push(currOp.expression.value.number);
 }
 
 void
-Stick::Interpreter::Sub() {
-  if (valStack.size() < 2)
-    RuntimeError::Throw("Call To Sub With Less Than 2 Values");
+Stick::Interpreter::IfOp() {
+  if (callStack.top().run.top() == FALSE || callStack.top().run.top() == SKIP) {
+    callStack.top().run.push(SKIP);
+  }
 
-  auto l = valStack.top();
-  valStack.pop();
-  auto r = valStack.top();
-  valStack.pop();
-
-  valStack.push(l - r);
-}
-
-void
-Stick::Interpreter::Print() {
-  if (valStack.size() == 0) {
-    std::cout << "Empty Stack\n";
+  if (evalIf()) {
+    callStack.top().run.push(TRUE);
   } else {
-    std::cout << std::to_string(valStack.top()) << '\n';
+    callStack.top().run.push(FALSE);
   }
 }
 
 void
-Stick::Interpreter::If() {
-
-  if (ifStack.top() == FALSE || ifStack.top() == SKIP) {
-    ifStack.push(SKIP);
+Stick::Interpreter::ElseOp() {
+  auto& top = callStack.top().run.top();
+  if (top == SKIP) {
     return;
   }
 
-  bool result;
-
-  switch (currOp.type) {
-    case IF_EQ:
-      result = valStack.top() == currOp.value.number;
-      break;
-    case IF_LT:
-      result = valStack.top() < currOp.value.number;
-      break;
-    case IF_GT:
-      result = valStack.top() > currOp.value.number;
-      break;
-    case IF_GTE:
-      result = valStack.top() >= currOp.value.number;
-      break;
-    case IF_LTE:
-      result = valStack.top() <= currOp.value.number;
-      break;
-    default:
-      RuntimeError::Throw("Unhandled If Type");
-  }
-
-  if (result) {
-    ifStack.push(TRUE);
+  if (top == TRUE) {
+    top = FALSE;
   } else {
-    ifStack.push(FALSE);
-  }
-}
-
-int64_t
-Stick::Interpreter::getOpValue() {
-  if (currOp.referenceValue) {
-    // TODO
-    RuntimeError::Throw("Reference Values Not Implemented");
-  }
-
-  return currOp.value.number;
-}
-
-void
-Stick::Interpreter::Else() {
-  auto val = ifStack.top();
-
-  if (val == SKIP)
-    return;
-
-  if (val == TRUE) {
-    ifStack.top() = FALSE;
-  } else {
-    ifStack.top() = TRUE;
+    top = TRUE;
   }
 }
 
 void
-Stick::Interpreter::Close() {
-  while (currOp.type == CLOSE) {
-    if (ifStack.size() == 1)
-      RuntimeError::Throw("Extra CLOSE");
-    ifStack.pop();
-    currOp = parser.nextOperation();
+Stick::Interpreter::CloseOp() {
+  if (callStack.top().run.size() < 2)
+    RuntimeError::Throw("Extra CLOSE Statement");
+
+  callStack.top().run.pop();
+}
+
+bool
+Stick::Interpreter::evalIf() {
+  switch (currOp.expression.boolean) {
+    case BoolOp::EQ:
+      return callStack.top().values.top() == currOp.expression.value.number;
+      break;
+    case BoolOp::GT:
+      return callStack.top().values.top() > currOp.expression.value.number;
+      break;
+    case BoolOp::LT:
+      return callStack.top().values.top() < currOp.expression.value.number;
+      break;
+    case BoolOp::GTE:
+      return callStack.top().values.top() >= currOp.expression.value.number;
+      break;
+    case BoolOp::LTE:
+      return callStack.top().values.top() <= currOp.expression.value.number;
+      break;
   }
+  return false;
 }
 
 void
 Stick::Interpreter::handleIfs() {
-  if (currOp.type == CLOSE)
-    Close();
-
   switch (currOp.type) {
-    case IF_EQ:
-    case IF_LT:
-    case IF_GT:
-    case IF_GTE:
-    case IF_LTE:
-      If();
-      currOp = parser.nextOperation();
+    case IF:
+      IfOp();
       break;
     case ELSE:
-      Else();
-      currOp = parser.nextOperation();
+      ElseOp();
+      break;
+    case CLOSE:
+      CloseOp();
       break;
   }
+}
+
+void
+Stick::Interpreter::handleLoops() {
+  switch (currOp.type) {
+    case WHILE:
+      whileOp();
+      break;
+    case LOOP:
+      loopOp();
+      break;
+  }
+}
+void
+Stick::Interpreter::whileOp() {
+  if (evalIf()) {
+    callStack.top().run.push(TRUE);
+    callStack.top().loops.push(currOp.position);
+  } else {
+    callStack.top().run.push(FALSE);
+    callStack.top().loops.push(currOp.position);
+  }
+}
+
+void
+Stick::Interpreter::loopOp() {
+  if (callStack.top().loops.size() < 1)
+    RuntimeError::Throw("Extra LOOP Statement");
+
+  if (callStack.top().run.top() == TRUE) {
+    auto top = callStack.top().loops.top();
+    callStack.top().loops.pop();
+    callStack.top().run.pop();
+    parser.seek(top);
+  } else {
+    callStack.top().loops.pop();
+    callStack.top().run.pop();
+  }
+}
+
+void
+Stick::Interpreter::Print() {
+  if (callStack.top().values.size() > 0) {
+    std::cout << std::to_string(callStack.top().values.top());
+  } else {
+    std::cout << "Empty Stack\n";
+  }
+}
+
+void
+Stick::Interpreter::Add() {
+  auto& top = callStack.top().values;
+  if (top.size() < 2)
+    RuntimeError::Throw("Add Called With Less Than 2 Values");
+
+  auto l = top.top();
+  top.pop();
+  auto r = top.top();
+  top.pop();
+
+  top.push(r);
+  top.push(l);
+  top.push(l + r);
+}
+
+void
+Stick::Interpreter::Sub() {
+  auto& top = callStack.top().values;
+  if (top.size() < 2)
+    RuntimeError::Throw("Add Called With Less Than 2 Values");
+
+  auto l = top.top();
+  top.pop();
+  auto r = top.top();
+  top.pop();
+
+  top.push(r);
+  top.push(l);
+  top.push(r - l);
+}
+
+void
+Stick::Interpreter::StackLen() {
+  auto& top = callStack.top().values;
+  top.push(top.size());
 }

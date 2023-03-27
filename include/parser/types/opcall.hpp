@@ -6,10 +6,15 @@
 
 typedef TokenValue OpValue;
 
-struct OpCall {
-  OpType  type;
+struct Expression {
+  BoolOp  boolean;
   OpValue value;
-  bool    referenceValue;
+};
+
+struct OpCall {
+  OpType     type;
+  Expression expression;
+  size_t     position;
 };
 
 #endif
