@@ -14,7 +14,7 @@
 
 #include <vector>
 
-enum OpType { NOP, PUSH, POP, IF, ELSE, CLOSE, WHILE, LOOP, FUNC, CALL, END, PRINT, ADD, SUB, STKLEN };
+enum OpType { NOP, PUSH, POP, IF, ELSE, CLOSE, WHILE, LOOP, FUNC, CALL, END, PRINT, ADD, SUB, STKLEN, COPY };
 
 enum BoolOp { NONE = 0, EQ, GT, LT, GTE, LTE };
 
@@ -46,6 +46,7 @@ inline std::vector<TrieEntry> operations{{PUSH, "PUSH"},
                                          {ADD, "ADD"},
                                          {SUB, "SUB"},
                                          {STKLEN, "STKLEN"},
+                                         {COPY, "COPY"},
                                          {END, ""}};
 
 #endif

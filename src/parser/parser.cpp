@@ -44,6 +44,7 @@ Stick::Parser::nextOperation() {
       moveLookahead();
       currOp.expression.boolean = static_cast<BoolOp>(lookahead.value.number);
     case PUSH:
+    case COPY:
       // std::cout << "PUSH\n";
       moveLookahead();
       currOp.expression.value = evaluateExpression();

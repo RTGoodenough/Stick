@@ -78,6 +78,9 @@ Stick::Interpreter::RunOp() {
       case ADD:
         Add();
         break;
+      case COPY:
+        Copy();
+        break;
       case STKLEN:
         StackLen();
         break;
@@ -239,8 +242,6 @@ Stick::Interpreter::Add() {
   auto r = top.top();
   top.pop();
 
-  top.push(r);
-  top.push(l);
   top.push(l + r);
 }
 
@@ -255,8 +256,6 @@ Stick::Interpreter::Sub() {
   auto r = top.top();
   top.pop();
 
-  top.push(r);
-  top.push(l);
   top.push(r - l);
 }
 
@@ -264,4 +263,26 @@ void
 Stick::Interpreter::StackLen() {
   auto& top = callStack.top().values;
   top.push(top.size());
+}
+
+void
+Stick::Interpreter::Copy() {
+  auto& top = callStack.top().values;
+  if (top.size() < currOp.expression.value.number)
+    RuntimeError::Throw("COPY " + std::to_string(top.top()) + " With Only " + std::to_string(top.size()) +
+                        " Values On Stack");
+
+  auto                 count = currOp.expression.value.number;
+  std::vector<int64_t> values;
+
+  for (int i = 0; i < count; ++i) {
+    values.push_back(top.top());
+    top.pop();
+  }
+
+  for (int i = 0; i < 2; ++i) {
+    for (auto val = values.rbegin(); val < values.rend(); ++val) {
+      top.push(*val);
+    }
+  }
 }

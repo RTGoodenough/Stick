@@ -45,6 +45,7 @@ class Interpreter {
   void Add();
   void Sub();
   void StackLen();
+  void Copy();
 
   void handleIfs();
   void IfOp();
